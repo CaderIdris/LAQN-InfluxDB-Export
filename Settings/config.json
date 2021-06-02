@@ -1,0 +1,48 @@
+{
+	"Pollutants": [],
+	"Frequency": "15min",
+	"LAQN": {
+		"API Address": "http://api.erg.kcl.ac.uk/AirQuality",
+		"Metadata Address": "Information/MonitoringSiteSpecies/GroupName=London/Json",
+		"csv Address": "https://www.londonair.org.uk/london/asp/downloadsite.asp?",
+		"Tags": {
+			"@LocalAuthorityCode": "Local Authority Code",
+			"@LocalAuthorityName": "Local Authority Name",
+			"@SiteCode": "Site Code",
+			"@SiteName": "Site Name",
+			"@SiteType": "Site Type",
+			"@DataOwner": "Data Owner",
+			"@DataManager": "Data Manager"
+		},
+		"Fields": {
+			"@Latitude": "Latitude",
+			"@Longitude": "Longitude"
+		},
+		"Other Metadata": {
+			"@DateOpened": "Date Opened",
+			"@DateClosed": "Date Closed",
+			"Species": "Species"
+		},
+		"Pollutant Codes": {
+			"Carbon Monoxide": "COm",
+			"Nitric Oxide": "NOm",
+			"Nitrogen Dioxide": "NO2m",
+			"Oxides of Nitrogen": "NOXm",
+			"Ozone": "O3m",
+			"PM10": "PM10m",
+			"PM2.5": "FINE",
+			"Sulphur Dioxide": "SO2m",
+			"Temperature": "TMP",
+			"Wind Direction": "WDIR",
+			"Wind Speed": "WSPD"
+		}
+	},
+	"Influx": {
+	  	"Bucket": "",
+	  	"IP": "",
+	  	"Port": "",
+	  	"Token": "",
+	  	"Organisation": ""
+	},
+	"Debug Stats": true
+}
