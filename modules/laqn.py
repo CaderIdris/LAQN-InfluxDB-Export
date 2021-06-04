@@ -1,4 +1,11 @@
-"""
+""" laqn.py
+
+This module contains all code necessary to communicate with the LAQN API and
+the website to download metadata, measurements and then format them in a list
+of jsons suitable for export to an InfluxDB 2.x database.
+
+Classes:
+    LAQN API: Downlaods LAQN data using a combo of the API and website
 """
 
 __copyright__ = "2021, Joe Hayward"
@@ -17,7 +24,7 @@ from collections import defaultdict
 
 
 class LAQNAPI:
-    """ Downloads LAQN website using a combo of the API and website
+    """ Downloads LAQN data using a combo of the API and website
 
     This class is used to download metadata and measurements from the LAQN.
     The metadata is downloaded via an API query to the official API. The site
@@ -62,7 +69,7 @@ class LAQNAPI:
         memory
     """
     def __init__(self):
-        """
+        """ Initialises the class
         """
         self.metadata = dict()
         self.measurement_csvs = defaultdict(dict)
@@ -79,6 +86,13 @@ class LAQNAPI:
             specifically the LAQN section
 
         Variables:
+            metadata_request (Request): Result of request to LAQN API
+            
+            metadata_raw (dict): Result of request to LAQN API in json format
+
+            station_name (str): The name of the station from the API
+
+            station_dict (dict): Container for metadata for a station
 
         """
         # Request metadata
@@ -99,7 +113,74 @@ class LAQNAPI:
             self.metadata[station_name] = station_dict
 
     def get_measurements(self, station_name, start_date, end_date, config):
-        """
+        """ Downloads measurements from the LAQN website in csv format
+
+        The LAQN API does offer an option to download measurements. However,
+        documentation for it is either incomplete or it is not intended to be
+        used for the purposes it is here. Using the API, it is only possible
+        to get measurements at 1h averages. There are options present to
+        request different measurement periods but there's nothing in the
+        documentation listing the valid options and trial and error could not
+        find how to get 15 minute data. There also appears to be no option to
+        get the ratification status of the data. For these reasons, the csvs that can be downloaded on the LAQN website were used instead.
+
+        The csvs on the LAQN website are generated based on a query, so this
+        is exploited for the program. The query requires the following info:
+        - Site code (Obtained via the metadata query) {&site=}
+        - Species to download measurements for (The codes for these are in the
+          config.json file) {&species[1 to 6]=}
+        - Start time (When to download measurements from, %d-%b-%Y format)
+          {&start=}
+        - End time (When to finish measurement download, %d-%b-%Y format)
+          {&end=}
+        - res (unknown, changing values had to discernible effect, fixed to 6)
+          {&res=}
+        - Period (Measurement periods e.g 1h) {&period=}
+
+        As the query only takes 6 pollutants, if more than 6 pollutants are
+        needed the query is split in to sets of 5 pollutants (requesting 6
+        sometimes causes an error). The csvs from these queries are appended
+        together and saved.
+
+        The csvs have the following columns:
+        - Site: Site name
+        - Species: Species measured
+        - ReadingDateTime: When the measurement started (average beginning)
+        - Value: Measurement value
+        - Units: Units of the measurement
+        - Provisional or Ratified: Status of the measurement
+
+        Keyword Arguments:
+            station_name (str): The name of the station, corresponds to the
+            metadata key
+
+            start_date (datetime): Date to start downloading measurtements
+            from
+
+            end_date (datetime): Date to end measurement download
+
+            config (dict): config file (Settings/config.json)
+
+        Variables:
+            allowed_pollutants (list): The pollutants to be downloaded, in
+            string format. Valid entries can be found in the README. If the
+            list in config.json is empty, all pollutants are added to it.
+
+            download_stages (int): The amount of separate csv downloads to
+            perform (calculated assuming 5 pollutants at a time)
+
+            pollutants_per_stage (list): List of lists, the sublists contain
+            5 elements with either pollutants to download or None to
+            fill up the remainder if needed.
+
+            site_code (str): The download code for the site, found in metadata
+
+            csv_measurements (DataFrame): The measurements downloaded from the
+            LAQN, appended together
+
+            data_url (str): Generated url+query for the csv
+
+            raw_csv (DataFrame): csv from LAQN website
         """
         # Determine pollutants to download, if list is empty download all
         allowed_pollutants = config['Pollutants']
@@ -147,6 +228,26 @@ class LAQNAPI:
                 ] = csv_measurements
 
     def csv_to_json_list(self, station_name, date):
+        """ Formats csvs for export to InfluxDB 2.x
+
+        The csvs downloaded from the LAQN website need to be formatted for
+        export to an InfluxDB 2.x instance.
+
+        Keyword Arguments:
+            station_name (str): Name of the station, used to locate it in
+            measurement_csvs
+
+            date (datetime): Start date, used to locate csv in
+            measurement_csvs (formatted to correct format in method)
+
+        Variables:
+            csv_file (DataFrame): Full csv from LAQN website
+
+            json_list (list): List of jsons to export to InfluxDB 2.x database
+
+            data_container (dict): Contains all measurements and tags in
+            correct format for Influx
+        """
         csv_file = self.measurement_csvs[
                 date.strftime('%Y-%m-%d')
                 ][station_name]
@@ -182,8 +283,9 @@ class LAQNAPI:
                     **self.metadata[station_name]["fields"]
                     }
             json_list.append(data_container)
-        self.measurement_jsons[date.strftime('%Y-%m-%d')][station_name] = json_list
-        print(len(json_list))
+        self.measurement_jsons[date.strftime('%Y-%m-%d')][
+                station_name
+                ] = json_list
 
     def csv_as_text(self, station_name, year):
         """ Return dataframe as text
@@ -192,7 +294,6 @@ class LAQNAPI:
             station_name (str): Used to locate DataFrame
 
             year (str): Used to locate DataFrame
-
 
         Returns:
             String representation of csv, or blank string if no csv
