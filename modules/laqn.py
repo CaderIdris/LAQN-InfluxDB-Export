@@ -17,13 +17,56 @@ from collections import defaultdict
 
 
 class LAQNAPI:
-    """
+    """ Downloads LAQN website using a combo of the API and website
+
+    This class is used to download metadata and measurements from the LAQN.
+    The metadata is downloaded via an API query to the official API. The site
+    code contained within the metadata is then used to locate the site on the
+    londonair website where a data query is formatted and a csv downloaded.
+
+    The LAQN API can be used to download measurements in a variety of formats
+    but the documentation is poor and it appears to be difficult to get
+    measurements at a different frequency than the default 1h or get the
+    ratification status of them. The csvs on the website can do both of these,
+    so they are downloaded instead.
+
+    Attributes:
+        metadata (dict): Dictionary containing metadata for all sites, each
+        site is represented by a key (site code) and the value is another
+        dict containing all info downloaded from the LAQN API
+
+        measurement_csvs (defaultdict): Defaultdict containing all csvs
+        with LAQN measurements split by year, then site
+
+        measurement_jsons (defaultdict): Defaultdict containing all jsons
+        with LAQN measurements split by year, then site formatted for export
+        to an InfluxDB 2.x database
+
+    Methods:
+        get_metadata: Downloads metadata from the LAQN API and stores it
+        in a dict
+
+        get_measurements: Downloads csvs of LAQN measurements from the
+        LAQN website
+
+        csv_to_json_list: Convert csvs to list of jsons for export to InfluxDB
+        2.x database
+
+        csv_as_text: Convert csv to string format
+
+        csv_save: Save csv to path
+
+        clear_measurement_csvs: Clear measurement_csvs instance to free memory
+
+        clear_measurement_jsons: Clear measurement_jsons instance to free
+        memory
     """
     def __init__(self):
         """
         """
         self.metadata = dict()
         self.measurement_csvs = defaultdict(dict)
+        self.measurement_jsons = defaultdict(dict)
 
     def get_metadata(self, laqn_config):
         """ Download metadata from LAQN site
@@ -99,8 +142,84 @@ class LAQNAPI:
             csv_measurements = csv_measurements.append(
                     raw_csv, ignore_index=True
                     )
-        print(len(list(set(csv_measurements["Species"]))))
+        self.measurement_csvs[start_date.strftime('%Y-%m-%d')][
+                station_name
+                ] = csv_measurements
+
+    def csv_to_json_list(self, station_name, date):
+        csv_file = self.measurement_csvs[
+                date.strftime('%Y-%m-%d')
+                ][station_name]
+        if csv_file is None:
+            return None
+        json_list = list()
+        for index, row in csv_file.iterrows():
+            if row["Value"] != row["Value"]:
+                continue
+                # Check for NaN, skip if present
+            data_container = {
+                    "time": dt.datetime.strptime(
+                        row["ReadingDateTime"],
+                        "%d/%m/%Y %H:%M"
+                        ),
+                    "measurement": "London Air Quality Network",
+                    "fields": {
+                        row['Species']: row["Value"]
+                        },
+                    "tags": {
+                        f"{row['Species']} status": row[
+                            "Provisional or Ratified"
+                            ],
+                        f"{row['Species']} Units": row['Units']
+                        }
+                    }
+            data_container["tags"] = {
+                    **data_container["tags"],
+                    **self.metadata[station_name]["tags"]
+                    }
+            data_container["fields"] = {
+                    **data_container["fields"],
+                    **self.metadata[station_name]["fields"]
+                    }
+            json_list.append(data_container)
+        self.measurement_jsons[date.strftime('%Y-%m-%d')][station_name] = json_list
+        print(len(json_list))
+
+    def csv_as_text(self, station_name, year):
+        """ Return dataframe as text
+
+        Keyword Arguments:
+            station_name (str): Used to locate DataFrame
+
+            year (str): Used to locate DataFrame
 
 
+        Returns:
+            String representation of csv, or blank string if no csv
+            present
+        """
+        if self.measurement_csvs[year][station_name] is not None:
+            return self.measurement_csvs[year][station_name].to_csv()
+        else:
+            return ""
 
+    def csv_save(self, path, station_name, year):
+        """ Save csv file to path
 
+        Keyword Arguments:
+            path (str): Path to save csv to
+
+            station_name (str): Used to locate DataFrame
+
+            year (str): Used to locate DataFrame
+        """
+        if self.measurement_csvs[year][station_name] is not None:
+            self.measurement_csvs[year][station_name].to_csv(
+                    path_or_buf=path
+                    )
+
+    def clear_measurement_csvs(self):
+        self.measurement_csvs = defaultdict(dict)
+
+    def clear_measurement_jsons(self):
+        self.measurement_jsons = defaultdict(dict)
