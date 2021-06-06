@@ -54,24 +54,25 @@ class InfluxWriter:
                 influx_config (dict): Contains all info relevant to
                 connecting to InfluxDB database. The following keys
                 are required:
-                    - "Influx Bucket": The bucket to send data to
-                    - "Influx IP": The IP address of the influxdb
+                    - "Bucket": The bucket to send data to
+                    - "IP": The IP address of the influxdb
                                    database, 'localhost' if on same
                                    machine
-                    - "Influx Port": Port of InfluxDB database,
+                    - "Port": Port of InfluxDB database,
                                      usually 8086
-                    - "Influx Token": User token used to authorise
+                    - "Token": User token used to authorise
                                       connection
-                    - "Influx Organisation": The organisation the
+                    - "Organisation": The organisation the
                                              user belongs to
 
 
         """
         self.config = influx_config
-        self.client = InfluxDBClient(url=f'http://{self.config["Influx IP"]}' \
-            f':{self.config["Influx Port"]}', token=self.config["Influx Token"],
-            org=self.config["Influx Organisation"],
-            timeout=150000)
+        self.client = InfluxDBClient(
+                url=f'http://{self.config["IP"]}'
+                f':{self.config["Port"]}', token=self.config["Token"],
+                org=self.config["Organisation"],
+                timeout=150000)
         self.write_client = self.client.write_api(write_options=SYNCHRONOUS)
 
     def write_container_list(self, list_of_containers):
@@ -86,6 +87,6 @@ class InfluxWriter:
                       e.g Sensor ID, measurement flag (Valid etc)
 
         """
-        self.write_client.write(self.config["Influx Bucket"],
-            self.config["Influx Organisation"],
+        self.write_client.write(self.config["Bucket"],
+            self.config["Organisation"],
             list_of_containers)

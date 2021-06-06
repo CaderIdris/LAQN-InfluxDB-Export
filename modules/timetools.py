@@ -3,6 +3,7 @@
 """
 
 import datetime as dt
+import numpy as np
 
 
 class TimeCalculator:
@@ -12,6 +13,9 @@ class TimeCalculator:
 
     def day_difference(self):
         return (self.end - self.start).days
+
+    def week_difference(self):
+        return int(np.ceil(self.day_difference() / 7))
 
     def year_difference(self):
         return self.end.year - self.start.year

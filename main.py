@@ -16,10 +16,10 @@ __author__ = "Idris Hayward"
 __copyright__ = "2021, Idris Hayward"
 __credits__ = ["Idris Hayward"]
 __license__ = "GNU General Public License v3.0"
-__version__ = "1.0 RC"
+__version__ = "1.0"
 __maintainer__ = "Idris Hayward"
 __email__ = "j.d.hayward@surrey.ac.uk"
-__status__ = "Release Candidate"
+__status__ = "Release"
 
 import argparse
 import json
@@ -230,7 +230,7 @@ if __name__ == "__main__":
     start_date = parse_date_string(start_date_string)
     end_date = parse_date_string(end_date_string)
     time_config = TimeCalculator(start_date, end_date)
-    days_to_download = time_config.day_difference()
+    weeks_to_download = time_config.week_difference()
 
     fancy_print(f"Start: {start_date.strftime('%Y-%m-%d')}")
     fancy_print(f"End: {end_date.strftime('%Y-%m-%d')}")
@@ -254,7 +254,7 @@ if __name__ == "__main__":
         fancy_print("", form="LINE")
 
     # Connect to InfluxDB 2.0 Database
-    influx = InfluxWriter(config_settings)
+    influx = InfluxWriter(config_settings["Influx"])
 
     # Get metadata from LAQN
     fancy_print("Downloading metadata from LAQN...", end="\r", flush=True)
@@ -263,34 +263,36 @@ if __name__ == "__main__":
     fancy_print("Metadata downloaded")
     fancy_print("", form="LINE")
     # Loop by day, then station
-    for day in range(0, days_to_download):
-        current_day = start_date + dt.timedelta(days=day)
+    for week in range(0, weeks_to_download):
+        current_week = start_date + dt.timedelta(days=7*week)
         for station, metadata in laqn.metadata.items():
             fancy_print(
                     f"Downloading measurements for "
-                    f"{current_day.strftime('%Y-%m-%d')}: "
-                    f"{station}",
+                    f"{current_week.strftime('%Y-%m-%d')}: "
+                    f"{metadata['tags']['Site Code']}",
                     end="\r",
                     flush=True
                     )
             laqn.get_measurements(
                     station,
-                    current_day,
-                    current_day + dt.timedelta(days=1),
+                    current_week,
+                    current_week + dt.timedelta(days=7),
                     config_settings
                     )
-            laqn.csv_to_json_list(station, current_day)
+            laqn.csv_to_json_list(station, current_week)
             fancy_print(
                     f"Exporting measurements for "
-                    f"{current_day.strftime('%Y-%m-%d')}: "
-                    f"{station}",
+                    f"{current_week.strftime('%Y-%m-%d')}: "
+                    f"{metadata['tags']['Site Code']}",
                     end="\r",
                     flush=True
                     )
             influx.write_container_list(
                     laqn.measurement_jsons[
-                        current_day.strftime('%Y-%m-%d')
+                        current_week.strftime('%Y-%m-%d')
                         ][station]
                     )
-        fancy_print(f"Finished {current_day.strftime('%Y-%m-%d')}")
+            laqn.clear_measurement_csvs()
+            laqn.clear_measurement_jsons()
+        fancy_print(f"Finished {current_week.strftime('%Y-%m-%d')}")
     fancy_print("", form="LINE")
