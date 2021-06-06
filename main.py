@@ -293,3 +293,4 @@ if __name__ == "__main__":
                         ][station]
                     )
         fancy_print(f"Finished {current_day.strftime('%Y-%m-%d')}")
+    fancy_print("", form="LINE")
