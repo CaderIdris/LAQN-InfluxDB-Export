@@ -1,14 +1,25 @@
-"""
+""" LAQN to InfluxDB 2.x Export
+
+This program communicates with the LAQN module, which downloads metadata from
+the LAQN API, then uses this metadata to generate a HTML url which contains
+a query for measurements in csv format. This method is used instead of
+querying measurements directly from the API as the csvs contain the
+ratification status of the measurement which cannot be obtained from the API.
+This method also allows for measurement periods other than 1 hour, something
+which is a part of the API but isn't documented sufficiently enough to allow
+the author to work out how to get 15 minute measurement periods.
+
+
 """
 
-__author__ = "Joe Hayward"
-__copyright__ = "2021, Joe Hayward"
-__credits__ = ["Joe Hayward"]
+__author__ = "Idris Hayward"
+__copyright__ = "2021, Idris Hayward"
+__credits__ = ["Idris Hayward"]
 __license__ = "GNU General Public License v3.0"
-__version__ = "0.1"
-__maintainer__ = "Joe Hayward"
+__version__ = "1.0 RC"
+__maintainer__ = "Idris Hayward"
 __email__ = "j.d.hayward@surrey.ac.uk"
-__status__ = "Alpha"
+__status__ = "Release Candidate"
 
 import argparse
 import json
@@ -219,6 +230,7 @@ if __name__ == "__main__":
     start_date = parse_date_string(start_date_string)
     end_date = parse_date_string(end_date_string)
     time_config = TimeCalculator(start_date, end_date)
+    days_to_download = time_config.day_difference()
 
     fancy_print(f"Start: {start_date.strftime('%Y-%m-%d')}")
     fancy_print(f"End: {end_date.strftime('%Y-%m-%d')}")
@@ -242,7 +254,7 @@ if __name__ == "__main__":
         fancy_print("", form="LINE")
 
     # Connect to InfluxDB 2.0 Database
-#    influx = InfluxWriter(config_settings)
+    influx = InfluxWriter(config_settings)
 
     # Get metadata from LAQN
     fancy_print("Downloading metadata from LAQN...", end="\r", flush=True)
@@ -251,40 +263,33 @@ if __name__ == "__main__":
     fancy_print("Metadata downloaded")
     fancy_print("", form="LINE")
     # Loop by day, then station
-    for station, metadata in laqn.metadata.items():
-        laqn.get_measurements(station, dt.datetime(2020, 1, 1), dt.datetime(2020, 1, 2), config_settings)
-    
-    # Get metadata from AURN
-#    fancy_print("Downloading metadata from DEFRA...", end="\r", flush=True)
-#    aurn = AURNAPI(config_settings)
-#    aurn.get_metadata(start_date.year, end_date.year)
-#    fancy_print(f"{len(aurn.metadata)} stations measuring within date range")
-#    if config_settings["Debug Stats"]:
-#        for station in aurn.metadata:
-#            fancy_print(
-#                    f"{station['tags']['Site Name']}: "
-#                    f"{station['tags']['Download Code']}"
-#                    )
-#    fancy_print("", form="LINE")
-#
-#    # Loop over station, then years
-#    for station in aurn.metadata:
-#        for year_offset in range(0, number_of_years + 1):
-#            # Download csv measurements
-#            year = start_date.year + year_offset
-#            download_code = station['tags']['Download Code']
-#            fancy_print(f"Downloading data for {station['tags']['Site Name']}"
-#                        f" ({year})", end="\r", flush=True)
-#            aurn.get_csv_measurements(download_code, year)
-#            if aurn.measurement_csvs[year][download_code] is None:
-#                continue  # If the csv couldn't be found, skip
-#            # Reformat csv to json list
-#            fancy_print(f"Exporting data for {station['tags']['Site Name']}"
-#                        f" ({year})", end="\r", flush=True)
-#            aurn.csv_to_json_list(station, download_code, year)
-#            influx.write_container_list(
-#                    aurn.measurement_jsons[year][download_code]
-#                    )
-#            aurn.clear_measurement_csvs()
-#            aurn.clear_measurement_jsons()
-#        fancy_print(f"{station['tags']['Site Name']} Finished")
+    for day in range(0, days_to_download):
+        current_day = start_date + dt.timedelta(days=day)
+        for station, metadata in laqn.metadata.items():
+            fancy_print(
+                    f"Downloading measurements for "
+                    f"{current_day.strftime('%Y-%m-%d')}: "
+                    f"{station}",
+                    end="\r",
+                    flush=True
+                    )
+            laqn.get_measurements(
+                    station,
+                    current_day,
+                    current_day + dt.timedelta(days=1),
+                    config_settings
+                    )
+            laqn.csv_to_json_list(station, current_day)
+            fancy_print(
+                    f"Exporting measurements for "
+                    f"{current_day.strftime('%Y-%m-%d')}: "
+                    f"{station}",
+                    end="\r",
+                    flush=True
+                    )
+            influx.write_container_list(
+                    laqn.measurement_jsons[
+                        current_day.strftime('%Y-%m-%d')
+                        ][station]
+                    )
+        fancy_print(f"Finished {current_day.strftime('%Y-%m-%d')}")

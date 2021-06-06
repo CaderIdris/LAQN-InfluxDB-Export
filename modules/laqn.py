@@ -8,13 +8,13 @@ Classes:
     LAQN API: Downlaods LAQN data using a combo of the API and website
 """
 
-__copyright__ = "2021, Joe Hayward"
-__credits__ = ["Joe Hayward"]
+__copyright__ = "2021, Idris Hayward"
+__credits__ = ["Idris Hayward"]
 __license__ = "GNU General Public License v3.0"
-__version__ = "0.1"
-__maintainer__ = "Joe Hayward"
+__version__ = "1.0 RC"
+__maintainer__ = "Idris Hayward"
 __email__ = "j.d.hayward@surrey.ac.uk"
-__status__ = "Alpha"
+__status__ = "Release Candidate"
 
 import requests as req
 import datetime as dt
