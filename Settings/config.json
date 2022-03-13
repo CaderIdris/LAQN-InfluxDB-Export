@@ -2,7 +2,7 @@
 	"Pollutants": [],
 	"Frequency": "15min",
 	"LAQN": {
-		"API Address": "http://api.erg.kcl.ac.uk/AirQuality",
+		"API Address": "http://api.erg.ic.ac.uk/AirQuality",
 		"Metadata Address": "Information/MonitoringSiteSpecies/GroupName=London/Json",
 		"csv Address": "https://www.londonair.org.uk/london/asp/downloadsite.asp?",
 		"Tags": {
