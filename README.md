@@ -171,6 +171,7 @@ Parses input string and returns `datetime` object. The string can have the follo
 ###### Raises
 
 |Error Type|Cause|
+|---|---|
 |`ValueError`|*date_string* does not match any of the valid formats|
 
 ##### fancy_print
