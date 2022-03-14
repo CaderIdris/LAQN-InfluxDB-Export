@@ -95,7 +95,6 @@ $ ./run.sh
 |*Nitrogen Dioxide*|`str`|Measurand code to use in query|`str` recognised by LAQN data download website|
 |*Oxides of Nitrogen*|`str`|Measurand code to use in query|`str` recognised by LAQN data download website|
 |*Ozone*|`str`|Measurand code to use in query|`str` recognised by LAQN data download website|
-|*Ozone*|`str`|Measurand code to use in query|`str` recognised by LAQN data download website|
 |*PM10*|`str`|Measurand code to use in query|`str` recognised by LAQN data download website|
 |*PM2.5*|`str`|Measurand code to use in query|`str` recognised by LAQN data download website|
 |*Sulphur Dioxide*|`str`|Measurand code to use in query|`str` recognised by LAQN data download website|
@@ -112,10 +111,67 @@ $ ./run.sh
 |||||
 |*Debug Stats*|`bool`|Print debug stats?|true/false|
 
+**NB: Some items in the LAQN category are the codes/addresses used to communicate with the LAQN API and website. Options not beginning with @ should only be changed if the LAQN change them**
+
+#### Options for *Pollutants*:
+- `"Carbon Monoxide"`
+- `"Nitric Oxide"`
+- `"Nitrogen Dioxide"`
+- `"Oxides of Nitrogen"`
+- `"Ozone"`
+- `"PM10"`
+- `"PM2.5"`
+- `"SO2"`
+- `"Temperature"`
+- `"Wind Direction"`
+- `"Wind Speed"`
 
 ---
 
 ## API
+
+### [main.py](./main.py)
+The main script used to run the program, utilises modules found in [modules](./modules) using config specified in [Settings](./Settings)
+
+#### Command line arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+| -s / --start-date | `str` | Date to begin data download (YYYY-MM-DD) | Y | None |
+| -e / --end-date | `str` | Date to end data download (YYYY-MM-DD) | Y None |
+|-c / --config | `str` | Alternate path to config file, use `/` in pleace of `\` | N | Settings.config.json |
+
+#### Functions
+
+##### parse_date_string
+
+Parses input string and returns `datetime` object. The string can have the following formats (see [strftime](http://strftime.org) for more info):
+|Simplified|strftime|
+|---|---|
+|YYYY|%Y|
+|YYYY-MM|%Y-%m|
+|YYYY/MM|%Y/%m|
+|YYYY\MM|%Y\%m|
+|YYYY.MM|%Y.%m|
+|YYYY-MM-DD|%Y-%m-%d|
+|YYYY/MM/DD|%Y/%m/%d|
+|YYYY\MM\DD|%Y\%m\%d|
+|YYYY.MM.DD|%Y.%m.%d|
+
+###### Keyword Arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*date_string*|`str`|The string to be parsed in to a `datetime` object|Y|None|
+
+###### Returns
+
+`datetime object parsed from *date_string*
+
+###### Raises
+
+|Error Type|Cause|
+|`ValueError`|*date_string* does not match any of the valid formats|
 
 ---
 

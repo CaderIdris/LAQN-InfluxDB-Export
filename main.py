@@ -53,7 +53,7 @@ def parse_date_string(dateString):
             "%Y-%m",
             "%Y/%m",
             "%Y\\%m",
-            "%Y.%m.%d",
+            "%Y.%m",
             "%Y-%m-%d",
             "%Y/%m/%d",
             "%Y\\%m\\%d",
