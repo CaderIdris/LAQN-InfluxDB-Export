@@ -173,6 +173,143 @@ Parses input string and returns `datetime` object. The string can have the follo
 |Error Type|Cause|
 |`ValueError`|*date_string* does not match any of the valid formats|
 
+##### fancy_print
+
+Makes a nicer output to the console
+
+###### Keyword Arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*str_to_print*|`str`|String that gets printed to console|Y|None|
+|*length*|`int`|Character length of output|N|70|
+|*form*|`str`|Output type (listed below)|N|NORM|
+|*char*|`str`|Character used as border, should only be 1 character|N|\U0001F533 (White box emoji)|
+|*end*|`str`|Appended to end of string, generally should be `\n` unless output is to be overwritten, then use `\r`|N|\r|
+|*flush*|`bool`|Flush the output stream?|N|False|
+
+**Valid options for _form_**
+| Option | Description |
+|---|---|
+|TITLE|Centres the string, one char at start and end|
+|NORM|Left aligned string, one char at start and end|
+|LINE|Prints line of *char* of specified *length*|
+
+##### get_json
+
+Open json file and return as dict
+
+###### Keyword Arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*path_to_json*|`str`|The path to the json file, can be relative e.g Settings/config.json|Y|None|
+
+###### Returns
+
+`dict` containing contents of json file
+
+###### Raises
+
+|Error Type|Cause|
+|---|---|
+|`FileNotFoundError`|File is not present|
+|`ValueError`|Formatting error in json file, such as ' used instead of " or comma after last item|
+
+### [laqn.py](./modules/laqn.py)
+
+Contains all classes and functions pertaining to communication with ACOEM UK API
+
+#### Classes
+
+##### LAQNAPI
+
+Handles requesting metadata from LAQN API and downloading measurements from LondonAir website
+
+###### Keyword Arguments
+
+None
+
+###### Attributes
+
+| Attribute | Type | Description |
+|---|---|---|
+|*metadata*|`dict`|Contains metadata for all stations in LAQN network, site code used as key|
+|*measurement_csvs*|`defaultdict`| Contains csvs storing measurement data separated by year, then site |
+|*measurement_jsons*|`defaultdict`| Contains jsons storing measurement data and metadata separated by year then site. Jsons are formatted for upload to InfluxDB 2.x database |
+
+###### Methods
+
+**get_metadata**
+
+Downloads metadata from LAQN API
+
+- Keyword arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*laqn_config*|`dict`|Contains information for communicating with LAQN API and website, specifically stored in the *"LAQN"* subsection of config.json|Y|None|
+
+
+**get_measurements**
+
+Downloads measurements from LAQN website in csv format
+
+- Keyword Arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*station_name*|`str`|The station code to download data for|Y|None|
+|*start_date*|`datetime`|Date to start downloading measurements from|Y|None|
+|*end_date|`datetime`|Date to end measurement download|Y|None|
+|*config*|`dict`|Config.json|Y|None|
+
+**csv_to_json_list**
+
+Reformats measurement csvs to list of jsons for upload to InfluxDB 2.x
+
+- Keyword Arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*station_name*|`str`|Station code|Y|None|
+|*date*|`datetime`|Start date|Y|None|
+
+**csv_as_text**
+
+Returns `dataframe` as `str`
+
+- Keyword Arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*station_name*|`str`|Station code|Y|None|
+|*year*|`str`|Year data was recorded|Y|None|
+
+- Returns
+
+String representation of measurement csv (or empty string if no data present)
+
+**csv_save**
+
+Save csv file to path
+
+- Keyword Arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*path*|`str`| Path to save csv to | Y | None|
+|*station_name*|`str`|Station code|Y|None|
+|*year*|`str`|Year data was recorded|Y|None|
+
+**clear_measurement_csvs**
+
+Clears all measurement csvs from memory
+
+**clear_measurement_jsons**
+
+Clears all measurement jsons from memory
+
 ---
 
 ## License
