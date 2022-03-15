@@ -311,6 +311,113 @@ Clears all measurement csvs from memory
 
 Clears all measurement jsons from memory
 
+### [influxwrite.py](./modules/influxwrite.py)
+
+Contains functions and classes pertaining to writing data to InfluxDB 2.x database
+
+#### Classes
+
+##### InfluxWriter
+
+Handles connection and export to InfluxDB 2.x database
+
+###### Keyword Arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*influx_config*|`dict`|Contains all info relevant to connecting to InfluxDB database|
+
+###### Attributes
+
+| Attribute | Type | Description |
+|---|---|---|
+|*config*|`dict`|Config info for InfluxDB 2.x database|
+|*client*|`InfluxDBClient`|Client object for InfluxDB 2.x database|
+|*write_client*|`InfluxDBClient.write_api`|Write client object for InfluxDB 2.x database|
+
+###### Methods
+
+**write_container_list
+
+Writes list of measurement containers to InfluxDB 2.x database, synchronous write used as asynchronous write caused memory issues on a 16 GB machine.
+
+- Keyword Arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*list_of_containers*|`list`|Exports list of data containers to InfluxDB 2.x database|
+
+Containers must have the following keys:
+|Key|Description|
+|---|---|
+|*time*|Measurement time in datetime format|
+|*measurement*|Name of measurement in the bucket|
+|*fields*|Measurements made at *time*|
+|*tags*|Metadata for measurements made at *time*|
+
+- Returns
+None
+
+### [timetools.py](./modules/timetools.py)
+
+Temporary class used for time based calculations, will be replaced eventually
+
+#### Classes
+
+##### TimeCalculator
+
+Used for time based calculations
+
+###### Keyword arguments
+
+| Argument | Type | Usage | Required? | Default |
+|---|---|---|---|---|
+|*date_start*|`datetime`|Start date|Y|None|
+|*date_end*|`datetime`|End date|Y|None|
+
+###### Attributes
+
+| Attribute | Type | Description |
+|---|---|---|
+|*start*|`datetime`|Start date|
+|*end*|`datetime`|End date|
+
+###### Methods
+
+**day_difference**
+
+Calculates days between *start* and *end*
+
+- Keyword Arguments
+None
+
+- Returns
+`int` representing number of days between *start* and *end*
+
+**week_difference**
+
+Calculates weeks between *start* and *end*
+
+- Keyword Arguments
+
+None
+
+- Returns
+
+`int` representing number of days between *start* and *end*
+
+**year_difference**
+
+Calculates years between *start* and *end*
+
+- Keyword Arguments
+
+None
+
+- Returns
+
+`int` representing number of days between *start* and *end*
+
 ---
 
 ## License
