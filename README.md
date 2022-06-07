@@ -2,6 +2,8 @@
 London Air Quality Network InfluxDB Export Tool
 </h1>
 
+**Contact**: CaderIdrisGH@outlook.com
+
 ---
 
 Unofficial Python3 script that utilises the [LAQN API](http://api.erg.ic.ac.uk/AirQuality/help) to download metadata for all monitoring stations in the [London Air Quality Network](http://www.londonair.org.uk), then download measurement data from the website in csv format and reformat it for upload to an InfluxDB 2.x database.
